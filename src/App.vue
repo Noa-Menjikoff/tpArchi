@@ -1,56 +1,67 @@
 <script>
 
-import TodoItem from './components/TodoItem.vue';
+import TodoItem from "./components/TodoItem.vue";
 
-let data ={
-  todos : [{text : 'Faire les courses',checked : true,id:1},{text : 'Taches',checked : false,id:2}],
-  title : 'Mes taches',
-  newItem : {text :''}
+let data = {
+  todos: [{ id: 1, text : 'Faire le courses', checked : true}],
+  title: 'Mes taches',
+  newItem: "",
+  chgmtItem: ""
 };
 
-export default {
-
-  data(){
+export default{
+  data() {
     return data;
   },
-  methods:{
-    addTodo: function(){
-      this.todos.push({text : this.tache ,checked : false});
+  methods: {
+    addItem: function(){
+      
+      let text = this.newItem.trim();
+      if(text){
+        this.todos.push({id: this.todos.length+1,text: text, checked: false});
+        this.newItem = "";
+      }
     },
-    removeItem: function(id){
-      for (var todo in this.todos){
-        if (this.todos[todo].id == id.id){
-          console.log(todo);
-          this.todos.splice(todo,1);
+    removeItem: function(item){
+      for(let i = 0; i < this.todos.length; i++){
+        if(this.todos[i].id == item.id){
+          this.todos.splice(i, 1);
+          break;
         }
       }
-      this.todos.splice();
-    }  
+    },
+    editItem: function(item, nouveauNom){
+      console.log(nouveauNom);
+      for(let i = 0; i < this.todos.length; i++){
+        if(this.todos[i].id == item.id){
+          this.todos[i].text = nouveauNom;
+          this.todos[i].checked = false;
+          break;
+        }
+      }
+    }
   },
-
-  components : { TodoItem }
-  
-  }
-
-
+  components:{ TodoItem }
+}
 </script>
 
 <template>
-
-  <div id="app6" class="container">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+        <div  class="container">
             <h2>{{ title }}</h2>
             <ol>
-              <TodoItem 
-                v-for="item of todos":todo="item"
-                @remove="removeItem">
-                
-              </TodoItem>
+                <TodoItem
+                v-for="item of todos"
+                :todo="item"
+                @remove = "removeItem"
+                @edit = "editItem"
+                ></TodoItem>
             </ol>
             <div class="container">
                 <h2> Ajouter un Todo</h2>
-                <input v-model ="tache" type="text"/>
+                <input v-model =newItem type="text"/>
                 <span class="input-group-btn">
-                    <button v-on:click ="addTodo"
+                    <button v-on:click ="addItem"
                         class="btn btn-default"
                         type="button">
                         Ajouter un todo
@@ -59,18 +70,3 @@ export default {
             </div>
         </div>
 </template>
-
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
