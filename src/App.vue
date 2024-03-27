@@ -4,6 +4,7 @@ import TodoItem from "./components/TodoItem.vue";
 
 let data = {
   todos: [{ id: 1, text : 'Faire le courses', checked : true}],
+  quiz: [],
   title: 'Mes taches',
   newItem: "",
   chgmtItem: ""
@@ -13,6 +14,13 @@ export default{
   data() {
     return data;
   },
+  mounted(){
+                    fetch('http://localhost:5000/quiz/api/v1.0/quiz')
+                    .then(response => response.json())
+                    .then(json => {
+                        this.quiz = json
+                    })
+                },
   methods: {
     addItem: function(){
       
@@ -66,7 +74,9 @@ export default{
                         type="button">
                         Ajouter un todo
                     </button>
+                    
                 </span>
             </div>
         </div>
+        <p>{{ quiz[1] }}</p>
 </template>
