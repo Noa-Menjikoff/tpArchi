@@ -50,5 +50,4 @@ export default{
                 </span>
             </div>
         </div>
-        <p>{{ quizs[1] }}</p>
 </template>
