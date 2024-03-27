@@ -15,13 +15,25 @@ export default{
     return data;
   },
   mounted(){
-                    fetch('http://localhost:5000/quiz/api/v1.0/quiz')
-                    .then(response => response.json())
-                    .then(json => {
-                        this.quizs = json
-                    })
-                },
+      fetch('http://localhost:5000/quiz/api/v1.0/quiz')
+      .then(response => response.json())
+      .then(json => {
+          this.quizs = json
+      })
+  },
   methods: {
+    removeItem: function(item){
+      console.log(item.id);
+      fetch("http://localhost:5000/quiz/api/v1.0/quiz/"+item.id,{
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        method:'DELETE'
+      }).then(res =>{
+        this.quizs.splice(this.quizs.indexOf(item),1);
+      }).catch(res =>{ console.log(res)});
+    },
   },
   components:{ TodoItem }
 }
@@ -35,6 +47,7 @@ export default{
                 <TodoItem
                 v-for="item of quizs"
                 :quiz="item"
+                @remove = "removeItem"
                 ></TodoItem>
             </ol>
             <div class="container">
