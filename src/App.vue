@@ -4,8 +4,8 @@ import TodoItem from "./components/TodoItem.vue";
 
 let data = {
   todos: [{ id: 1, text : 'Faire le courses', checked : true}],
-  quiz: [],
-  title: 'Mes taches',
+  quizs: [],
+  title: 'Mes quiz',
   newItem: "",
   chgmtItem: ""
 };
@@ -18,36 +18,10 @@ export default{
                     fetch('http://localhost:5000/quiz/api/v1.0/quiz')
                     .then(response => response.json())
                     .then(json => {
-                        this.quiz = json
+                        this.quizs = json
                     })
                 },
   methods: {
-    addItem: function(){
-      
-      let text = this.newItem.trim();
-      if(text){
-        this.todos.push({id: this.todos.length+1,text: text, checked: false});
-        this.newItem = "";
-      }
-    },
-    removeItem: function(item){
-      for(let i = 0; i < this.todos.length; i++){
-        if(this.todos[i].id == item.id){
-          this.todos.splice(i, 1);
-          break;
-        }
-      }
-    },
-    editItem: function(item, nouveauNom){
-      console.log(nouveauNom);
-      for(let i = 0; i < this.todos.length; i++){
-        if(this.todos[i].id == item.id){
-          this.todos[i].text = nouveauNom;
-          this.todos[i].checked = false;
-          break;
-        }
-      }
-    }
   },
   components:{ TodoItem }
 }
@@ -59,14 +33,12 @@ export default{
             <h2>{{ title }}</h2>
             <ol>
                 <TodoItem
-                v-for="item of todos"
-                :todo="item"
-                @remove = "removeItem"
-                @edit = "editItem"
+                v-for="item of quizs"
+                :quiz="item"
                 ></TodoItem>
             </ol>
             <div class="container">
-                <h2> Ajouter un Todo</h2>
+                <h2> Ajouter un quiz</h2>
                 <input v-model =newItem type="text"/>
                 <span class="input-group-btn">
                     <button v-on:click ="addItem"
@@ -78,5 +50,5 @@ export default{
                 </span>
             </div>
         </div>
-        <p>{{ quiz[1] }}</p>
+        <p>{{ quizs[1] }}</p>
 </template>
