@@ -2,7 +2,6 @@
 import TodoItem from "./components/TodoItem.vue";
 
 let data = {
-  todos: [{ id: 1, text : 'Faire le courses', checked : true}],
   quizs: [],
   title: 'Mes quiz',
   newItem: "",
@@ -29,11 +28,12 @@ export default {
         },
         method: 'DELETE'
       }).then(res => {
-        this.quizs.splice(this.quizs.indexOf(item), 1);
+        this.quizs = this.quizs.filter(quiz => quiz.id !== item.id);
       }).catch(res => {
         console.log(res);
       });
     },
+
     addItem: function() {
       if (this.newItem.trim() === '') {
         return;
