@@ -56,6 +56,11 @@ export default {
           console.error('Erreur lors de l\'ajout du questionnaire :', error);
         });
     },
+    editItem: function(item) {
+      console.log(item);
+    },
+
+
 
   },
   components: { TodoItem }
@@ -70,6 +75,7 @@ export default {
         v-for="item of quizs"
         :quiz="item"
         @remove="removeItem"
+        @edit="editItem"
         :key="item.id"
       ></TodoItem>
     </ol>

@@ -13,22 +13,18 @@ export default{
         suppr : function() {
             this.$emit('remove',{id:this.quiz.id});
         },
+        edit : function() {
+            this.$emit('edit',{id:this.quiz.id});
+        },
     },
-    emits : ['remove']
+    emits : ['remove','edit']
 }
 </script>
 
 <template>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <div>
-        <p>{{ quiz.name }}</p>
-        <input type="button"
-            class="btnbtn-danger"
-            value="Supprimer"
-            @click="suppr">
+      <p>{{ quiz.name }}</p>
+      <button @click="edit">Modifier</button>
+      <button @click="suppr">Supprimer</button>
     </div>
-
-            
-
-
-</template>
+  </template>
