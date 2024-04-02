@@ -54,8 +54,6 @@ class Questionnaire(db.Model):
 
 class Question(db.Model):
     id = db.Column(db.Integer , primary_key = True)
-
-    
     
     title = db.Column(db.String(120))
 
@@ -121,18 +119,10 @@ class SimpleQuestion(Question):
     }
 
 class MultipleQuestion(Question):
-    questionnaire_id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
+    id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
     proposition1 = db.Column(db.String(120))
     proposition2 = db.Column(db.String(120))
     reponse = db.Column(db.String(120))
-    title = db.Column(db.String(120))
-
-    def __init__(self ,title, proposition1,proposition2,reponse,questionnaire_id):
-        self.proposition1 = proposition1
-        self.proposition2 = proposition2
-        self.questionnaire_id = questionnaire_id
-        self.reponse = reponse
-        self.title = title
 
     __mapper_args__ = {
         'polymorphic_identity': 'mutiplequestion',
