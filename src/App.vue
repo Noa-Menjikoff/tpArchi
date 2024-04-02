@@ -13,28 +13,30 @@ export default {
     return data;
   },
   mounted() {
-    fetch('http://localhost:5000/quiz/api/v1.0/quiz')
-      .then(response => response.json())
-      .then(json => {
-        this.quizs = json;
-      });
+    this.fetchQuizs();
   },
   methods: {
-    removeItem: function(item) {
+    fetchQuizs() {
+      fetch('http://localhost:5000/quiz/api/v1.0/quiz')
+        .then(response => response.json())
+        .then(json => {
+          this.quizs = json;
+        });
+    },
+    removeItem(item) {
       fetch("http://localhost:5000/quiz/api/v1.0/quiz/" + item.id, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         method: 'DELETE'
-      }).then(res => {
+      }).then(() => {
         this.quizs = this.quizs.filter(quiz => quiz.id !== item.id);
-      }).catch(res => {
-        console.log(res);
+      }).catch(error => {
+        console.error('Erreur lors de la suppression du questionnaire :', error);
       });
     },
-
-    addItem: function() {
+    addItem() {
       if (this.newItem.trim() === '') {
         return;
       }
@@ -47,37 +49,65 @@ export default {
         body: JSON.stringify({
           name: this.newItem 
         })
-      }).then(response => response.json())
-        .then(json => {
-          console.log(json);
-          this.newItem = '';
-          window.location.reload();
-        }).catch(error => {
-          console.error('Erreur lors de l\'ajout du questionnaire :', error);
-        });
+      }).then(() => {
+        this.newItem = '';
+        this.fetchQuizs(); // Rafraîchir la liste après l'ajout
+      }).catch(error => {
+        console.error('Erreur lors de l\'ajout du questionnaire :', error);
+      });
     },
-    editItem: function(item) {
+    startEditing(item) {
+      // Mettre l'élément en mode édition
+      this.quizs.forEach(quiz => {
+        if (quiz.id !== item.id) {
+          quiz.editing = false;
+        } else {
+          quiz.editing = true;
+        }
+      });
+    },
+    confirmEdit(item) {
+      fetch("http://localhost:5000/quiz/api/v1.0/quiz/" + item.id, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        method: 'PUT',
+        body: JSON.stringify({
+          name: item.name
+        })
+      }).then(() => {
+        item.editing = false; // Sortir du mode édition
+      }).catch(error => {
+        console.error('Erreur lors de la mise à jour du questionnaire :', error);
+      });
+    },
+    editItem(item) {
       console.log(item);
     },
-
-
-
   },
   components: { TodoItem }
 };
 </script>
 
+
 <template>
   <div class="container">
     <h2>{{ title }}</h2>
     <ol>
-      <TodoItem
-        v-for="item of quizs"
-        :quiz="item"
-        @remove="removeItem"
-        @edit="editItem"
-        :key="item.id"
-      ></TodoItem>
+      <li v-for="item of quizs" :key="item.id">
+        <TodoItem
+          :quiz="item"
+          @remove="removeItem"
+          @edit="editItem"
+          @start-editing="startEditing"
+        ></TodoItem>
+        <!-- Champ d'édition et bouton de confirmation -->
+        <div v-if="item.editing">
+          <input v-model="item.name" type="text" />
+          <button @click="confirmEdit(item)">Confirmer</button>
+        </div>
+      </li>
     </ol>
     <div class="container">
       <h2>Ajouter un quiz</h2>
@@ -90,3 +120,4 @@ export default {
     </div>
   </div>
 </template>
+

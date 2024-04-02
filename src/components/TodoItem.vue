@@ -1,30 +1,27 @@
 <script>
-
-
-export default{
-    data(){
-        return{
-        }
+export default {
+  props: {
+    quiz: Object
+  },
+  methods: {
+    deleteItem() {
+      this.$emit('remove', { id: this.quiz.id });
     },
-    props : {
-        quiz : Object
+    editItem() {
+      this.$emit('edit', { id: this.quiz.id });
     },
-    methods : {
-        suppr : function() {
-            this.$emit('remove',{id:this.quiz.id});
-        },
-        edit : function() {
-            this.$emit('edit',{id:this.quiz.id});
-        },
-    },
-    emits : ['remove','edit']
-}
+    startEditing() {
+      this.$emit('start-editing', { id: this.quiz.id });
+    }
+  },
+  emits: ['remove', 'edit', 'start-editing']
+};
 </script>
 
 <template>
-    <div>
-      <p>{{ quiz.name }}</p>
-      <button @click="edit">Modifier</button>
-      <button @click="suppr">Supprimer</button>
-    </div>
-  </template>
+  <div>
+    <p>{{ quiz.name }}</p>
+    <button @click="startEditing">Modifier</button>
+    <button @click="deleteItem">Supprimer</button>
+  </div>
+</template>
