@@ -65,3 +65,5 @@ def create_question(id_quiz):
         kwargs['reponse'] = request.json.get('reponse', None)
 
     return Question.create_question(title, question_type, id_quiz, **kwargs)
+
+

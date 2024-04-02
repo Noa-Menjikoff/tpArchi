@@ -1,5 +1,4 @@
 <script>
-
 import TodoItem from "./components/TodoItem.vue";
 
 let data = {
@@ -10,57 +9,78 @@ let data = {
   chgmtItem: ""
 };
 
-export default{
+export default {
   data() {
     return data;
   },
-  mounted(){
-      fetch('http://localhost:5000/quiz/api/v1.0/quiz')
+  mounted() {
+    fetch('http://localhost:5000/quiz/api/v1.0/quiz')
       .then(response => response.json())
       .then(json => {
-          this.quizs = json
-      })
+        this.quizs = json;
+      });
   },
   methods: {
-    removeItem: function(item){
-      console.log(item.id);
-      fetch("http://localhost:5000/quiz/api/v1.0/quiz/"+item.id,{
+    removeItem: function(item) {
+      fetch("http://localhost:5000/quiz/api/v1.0/quiz/" + item.id, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        method:'DELETE'
-      }).then(res =>{
-        this.quizs.splice(this.quizs.indexOf(item),1);
-      }).catch(res =>{ console.log(res)});
+        method: 'DELETE'
+      }).then(res => {
+        this.quizs.splice(this.quizs.indexOf(item), 1);
+      }).catch(res => {
+        console.log(res);
+      });
     },
+    addItem: function() {
+      if (this.newItem.trim() === '') {
+        return;
+      }
+      fetch("http://localhost:5000/quiz/api/v1.0/quiz", {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          name: this.newItem 
+        })
+      }).then(response => response.json())
+        .then(json => {
+          console.log(json);
+          this.newItem = '';
+          window.location.reload();
+        }).catch(error => {
+          console.error('Erreur lors de l\'ajout du questionnaire :', error);
+        });
+    },
+
   },
-  components:{ TodoItem }
-}
+  components: { TodoItem }
+};
 </script>
 
 <template>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-        <div  class="container">
-            <h2>{{ title }}</h2>
-            <ol>
-                <TodoItem
-                v-for="item of quizs"
-                :quiz="item"
-                @remove = "removeItem"
-                ></TodoItem>
-            </ol>
-            <div class="container">
-                <h2> Ajouter un quiz</h2>
-                <input v-model =newItem type="text"/>
-                <span class="input-group-btn">
-                    <button v-on:click ="addItem"
-                        class="btn btn-default"
-                        type="button">
-                        Ajouter un todo
-                    </button>
-                    
-                </span>
-            </div>
-        </div>
+  <div class="container">
+    <h2>{{ title }}</h2>
+    <ol>
+      <TodoItem
+        v-for="item of quizs"
+        :quiz="item"
+        @remove="removeItem"
+        :key="item.id"
+      ></TodoItem>
+    </ol>
+    <div class="container">
+      <h2>Ajouter un quiz</h2>
+      <input v-model="newItem" type="text" />
+      <span class="input-group-btn">
+        <button @click="addItem" class="btn btn-default" type="button">
+          Ajouter un quiz
+        </button>
+      </span>
+    </div>
+  </div>
 </template>
