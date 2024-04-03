@@ -1,5 +1,5 @@
 <script>
-import TodoItem from "./components/TodoItem.vue";
+import QuestionnaireItem from "./components/QuestionnaireItem.vue";
 
 let data = {
   quizs: [],
@@ -86,7 +86,7 @@ export default {
       console.log(item);
     },
   },
-  components: { TodoItem }
+  components: { QuestionnaireItem }
 };
 </script>
 
@@ -96,12 +96,12 @@ export default {
     <h2>{{ title }}</h2>
     <ol>
       <li v-for="item of quizs" :key="item.id">
-        <TodoItem
+        <QuestionnaireItem
           :quiz="item"
           @remove="removeItem"
           @edit="editItem"
           @start-editing="startEditing"
-        ></TodoItem>
+        ></QuestionnaireItem>
         <!-- Champ d'édition et bouton de confirmation -->
         <div v-if="item.editing">
           <input v-model="item.name" type="text" />
