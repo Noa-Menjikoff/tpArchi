@@ -108,6 +108,7 @@ class Question(db.Model):
         return jsonify(new_question.to_json())
     
 
+
 class SimpleQuestion(Question):
     id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
     reponse = db.Column(db.String(120))

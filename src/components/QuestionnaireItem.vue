@@ -36,15 +36,16 @@ export default {
     afficher() {
       this.displayList = !this.displayList; 
     },
+    
     removeQuestion(item) {
-      fetch("http://localhost:5000/quiz/api/v1.0/quiz/" + item.id, {
+      fetch("http://localhost:5000/quiz/api/v1.0/quiz/"+this.quiz.id+"/questions/"+item.id, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         method: 'DELETE'
       }).then(() => {
-        this.quizs = this.quizs.filter(quiz => quiz.id !== item.id);
+        this.questions = this.questions.filter(question => question.id !== item.id);
       }).catch(error => {
         console.error('Erreur lors de la suppression du questionnaire :', error);
       });
