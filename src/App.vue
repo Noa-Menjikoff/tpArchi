@@ -3,9 +3,10 @@ import TodoItem from "./components/TodoItem.vue";
 
 let data = {
   quizs: [],
+  questions: [],
   title: 'Mes quiz',
   newItem: "",
-  chgmtItem: ""
+  newQuestion: "",
 };
 
 export default {
@@ -22,6 +23,36 @@ export default {
         .then(json => {
           this.quizs = json;
         });
+    },
+    fetchQuestions(id) {
+      fetch(`http://localhost:5000/quiz/api/v1.0/quiz/${id.id}/questions/`)
+       .then(response => response.json())
+       .then(json => {
+          this.questions = json;
+        });
+      console.log(this.questions);
+    },
+    createQuestion(id) {
+      if (this.newQuestion.trim() === '') {
+        return;
+      }
+      fetch(`http://localhost:5000/quiz/api/v1.0/quiz/${id}/questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: this.newQuestion,
+          question_type: 'simplequestion'
+        })
+      }).then(() => {
+        this.newQuestion = "";
+        this.fetchQuizs();
+        this.fetchQuestions(id);
+        console.log("Question created");
+      }).catch(error => {
+        console.error('Erreur lors de l\'ajout de la question :', error);
+      });
     },
     removeItem(item) {
       fetch("http://localhost:5000/quiz/api/v1.0/quiz/" + item.id, {
@@ -51,13 +82,12 @@ export default {
         })
       }).then(() => {
         this.newItem = '';
-        this.fetchQuizs(); // Rafraîchir la liste après l'ajout
+        this.fetchQuizs(); 
       }).catch(error => {
         console.error('Erreur lors de l\'ajout du questionnaire :', error);
       });
     },
     startEditing(item) {
-      // Mettre l'élément en mode édition
       this.quizs.forEach(quiz => {
         if (quiz.id !== item.id) {
           quiz.editing = false;
@@ -82,9 +112,6 @@ export default {
         console.error('Erreur lors de la mise à jour du questionnaire :', error);
       });
     },
-    editItem(item) {
-      console.log(item);
-    },
   },
   components: { TodoItem }
 };
@@ -99,14 +126,20 @@ export default {
         <TodoItem
           :quiz="item"
           @remove="removeItem"
-          @edit="editItem"
           @start-editing="startEditing"
+          @consult="fetchQuestions"
         ></TodoItem>
-        <!-- Champ d'édition et bouton de confirmation -->
         <div v-if="item.editing">
           <input v-model="item.name" type="text" />
           <button @click="confirmEdit(item)">Confirmer</button>
         </div>
+        <div>
+      <input v-model="newQuestion" type="text" placeholder="Nouvelle question"/>
+          <button @click="createQuestion(item.id)">Ajouter</button>
+        </div>
+        <ul>
+          <li v-for="question of questions" :key="index">{{ question }}</li>
+        </ul>
       </li>
     </ol>
     <div class="container">
@@ -120,4 +153,3 @@ export default {
     </div>
   </div>
 </template>
-
