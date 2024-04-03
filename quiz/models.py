@@ -1,5 +1,5 @@
-from flask import jsonify, url_for
 from .app import db
+from sqlalchemy import delete
 
 class Questionnaire(db.Model):
     id = db.Column(db.Integer , primary_key = True)
@@ -7,61 +7,28 @@ class Questionnaire(db.Model):
 
     def __init__(self , name):
         self.name = name
-        
-    def __repr__(self):
-        return "<Questionnaire(%d) %s>" %(self.id , self.name)
 
+    def __repr__(self):
+        return "<Questionnaire (%d) %s>" % (self.id , self.name)
+    
     def to_json(self):
         json = {
             'id': self.id,
             'name': self.name,
-            'url': 'http://127.0.0.1:5000'+url_for('get_questionnaire', id_quiz=self.id),
-            'questions_url': [question.to_json()['url'] for question in self.questions]
+            'questions': [f"/quiz/api/v1.0/quiz/{self.id}/questions/{question.id}" for question in self.questions.all()]
         }
         return json
 
-    def get_questionnaires():
-        questionnaires = Questionnaire.query.all()
-        result = []
-        for questionnaire in questionnaires:
-            result.append(questionnaire.to_json())
-        return jsonify(result)
-    
-    def get_questionnaire(id):
-        questionnaire = Questionnaire.query.get(id)
-        return jsonify(questionnaire.to_json())
-
-    def create_questionnaire(name):
-        new_questionnaire = Questionnaire(name=name)
-        db.session.add(new_questionnaire)
-        db.session.commit()
-        return jsonify(new_questionnaire.to_json())
-
-    def update_questionnaire(id, name):
-        questionnaire = Questionnaire.query.get(id)
-        questionnaire.name = name
-        db.session.commit()
-        return jsonify(questionnaire.to_json())
-
-    def delete_questionnaire(id):
-        questionnaire = Questionnaire.query.get(id)
-        db.session.delete(questionnaire)
-        db.session.commit()
-        return jsonify({"message": "Questionnaire supprimer"})
-    
-
-
+    def set_name(self , name):
+        self.name = name
 
 class Question(db.Model):
-    id = db.Column(db.Integer , primary_key = True)
-    
+    id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String(120))
-
-    questionnaire_id = db.Column(db.Integer , db. ForeignKey('questionnaire.id'))
-
-    questionnaire = db.relationship("Questionnaire", backref = db.backref("questions", lazy="dynamic"))
-
+    reponse = db.Column(db.String(120))
     question_type = db.Column(db.String(120))
+    questionnaire_id = db.Column(db.Integer, db.ForeignKey('questionnaire.id'))
+    questionnaire = db.relationship ("Questionnaire", backref=db.backref("questions", lazy="dynamic"))
 
     __mapper_args__ = {
         'polymorphic_identity': 'question',
@@ -69,64 +36,122 @@ class Question(db.Model):
         'polymorphic_on': question_type
     }
 
-    def __init__(self , title,question_type,questionnaire_id):
+    def __init__(self, title, question_type, questionnaire_id):
         self.title = title
         self.question_type = question_type
         self.questionnaire_id = questionnaire_id
-
-
+    
     def to_json(self):
         json = {
-            'url': 'http://127.0.0.1:5000'+url_for('get_question', id_quiz=self.questionnaire_id,id_question=self.id),
+            'questionnaire_id': self.questionnaire_id,
+            'id': self.id,
             'title': self.title,
+            'type': self.question_type,
+            'answer': self.reponse
         }
         return json
-    
-    def get_questions(id):
-        question = Question.query.get(id)
-        return jsonify(question.to_json())
-
-    def get_questions_for_questionnaire(id_quiz):
-        questions = Question.query.filter_by(questionnaire_id=id_quiz).all()
-        result = [question.to_json() for question in questions]
-        return jsonify(result)
-    
-    def get_question(id_question,id_quiz):
-        question = Question.query.filter_by(id=id_question, questionnaire_id=id_quiz).first()
-        return jsonify(question.to_json())
-    
-    def create_question(title, question_type, questionnaire_id, **kwargs):
-        if question_type == 'simplequestion':
-            new_question = SimpleQuestion(title=title, question_type=question_type, questionnaire_id=questionnaire_id, **kwargs)
-        elif question_type == 'mutiplequestion':
-            new_question = MultipleQuestion(title=title, question_type=question_type, questionnaire_id=questionnaire_id, **kwargs)
-        else:
-            return jsonify({'error': 'Invalid question type'}), 400
-
-        db.session.add(new_question)
-        db.session.commit()
-        return jsonify(new_question.to_json())
-    
-
 
 class SimpleQuestion(Question):
     id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
-    reponse = db.Column(db.String(120))
 
     __mapper_args__ = {
-        'polymorphic_identity': 'simplequestion',
+        'polymorphic_identity': 'simple',
         'with_polymorphic': '*',
         'polymorphic_load': 'inline'
     }
+
+    def __init__(self, title, reponse, questionnaire_id):
+        super().__init__(title, "simple", questionnaire_id)
+        self.reponse = reponse
 
 class MultipleQuestion(Question):
     id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
     proposition1 = db.Column(db.String(120))
     proposition2 = db.Column(db.String(120))
-    reponse = db.Column(db.String(120))
 
     __mapper_args__ = {
-        'polymorphic_identity': 'mutiplequestion',
+        'polymorphic_identity': 'multiple',
         'with_polymorphic': '*',
         'polymorphic_load': 'inline'
-    }  
+    }
+
+    def __init__(self, title, proposition1, proposition2, reponse, questionnaire_id):
+        super().__init__(title, "multiple", questionnaire_id)
+        self.proposition1 = proposition1
+        self.proposition2 = proposition2
+        self.reponse = reponse
+
+    def to_json(self):
+        json = super().to_json()
+        json['proposition1'] = self.proposition1
+        json['proposition2'] = self.proposition2
+        return json
+
+
+def get_questionnaires():
+    return Questionnaire.query.all()
+
+def get_questionnaire(id):
+    return Questionnaire.query.get_or_404(id)
+
+def create_questionnaire(name):
+    questionnaire = Questionnaire(name)
+    db.session.add(questionnaire)
+    db.session.commit()
+    return questionnaire
+
+def update_questionnaire_name(id, name):
+    get_questionnaire(id).set_name(name)
+    db.session.commit()
+
+def delete_questionnaire(id):
+    deletion = get_questionnaire(id) # Pas besoin de "if questionnaire:" car get_or_404() le fait déjà
+    db.session.delete(deletion)
+    db.session.commit()
+
+
+def get_questions(id_quiz):
+    return get_questionnaire(id_quiz).questions.all()
+
+def get_question(id_quiz, id_question):
+    return get_questionnaire(id_quiz).questions.filter_by(id=id_question).first_or_404()
+
+def update_question(id_quiz, id_question, requete):
+    question = get_question(id_quiz, id_question)
+    if requete.get('title'):
+        question.title = requete['title']
+    if requete.get('answer'):
+        question.reponse = requete['answer']
+    if requete.get('proposition1') and question.question_type == 'multiple':
+        question.proposition1 = requete['proposition1']
+    if requete.get('proposition2') and question.question_type == 'multiple':
+        question.proposition2 = requete['proposition2']
+    db.session.commit()
+    return question
+
+def create_simple_question(id_quiz, title, reponse):
+    question = SimpleQuestion(title=title,
+                              reponse=reponse,
+                              questionnaire_id=id_quiz)
+    db.session.add(question)
+    db.session.commit()
+    return question
+
+def create_multiple_question(id_quiz, title, proposition1, proposition2, reponse):
+    question = MultipleQuestion(title=title,
+                                proposition1=proposition1,
+                                proposition2=proposition2,
+                                reponse=reponse,
+                                questionnaire_id=id_quiz)
+    db.session.add(question)
+    db.session.commit()
+    return question
+
+def update_questionnaire_name(id, name):
+    get_questionnaire(id).set_name(name)
+    db.session.commit()
+
+def delete_question(id_quiz, id_question):
+    deletion = get_question(id_quiz, id_question) # Pas besoin de "if questionnaire:" car get_or_404() le fait déjà
+    db.session.delete(deletion)
+    db.session.commit()

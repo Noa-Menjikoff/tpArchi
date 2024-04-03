@@ -5,7 +5,6 @@ let data = {
   quizs: [],
   title: 'Mes quiz',
   newItem: "",
-  chgmtItem: ""
 };
 
 export default {

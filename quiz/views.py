@@ -1,69 +1,86 @@
-from flask import jsonify, abort, make_response, request
 from .app import app
-from .models import Questionnaire, Question
+import quiz.models as md
+from flask import jsonify, abort, make_response, request, url_for
 
-# Error handlers (as provided in your code)
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'Not found'}), 404)
 
-@app.errorhandler(400)
-def bad_request(error):
-    return make_response(jsonify({'error': 'Bad request'}), 400)
-
-@app.route('/quiz/api/v1.0/quiz', methods=['GET'])
+@app.route('/quiz/api/v1.0/quiz', methods = ['GET'])
 def get_questionnaires():
-    return Questionnaire.get_questionnaires()
+    res = []
+    for quiz in md.get_questionnaires():
+        res.append(quiz.to_json())
+    return jsonify(res)
 
-@app.route('/quiz/api/v1.0/quiz/<int:id_quiz>', methods=['GET'])
-def get_questionnaire(id_quiz):
-    return Questionnaire.get_questionnaire(id_quiz)
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>', methods = ['GET'])
+def get_questionnaire(quiz_id):
+    return jsonify(md.get_questionnaire(quiz_id).to_json())
 
-@app.route('/quiz/api/v1.0/quiz', methods=['POST'])
+
+@app.route('/quiz/api/v1.0/quiz', methods = ['POST'])
 def create_questionnaire():
     if not request.json or 'name' not in request.json:
         abort(400)
-    name = request.json['name']
-    return Questionnaire.create_questionnaire(name)
+    questionnaire = md.create_questionnaire(request.json['name']).to_json()
+    return jsonify({'quiz': questionnaire}), 201
 
-@app.route('/quiz/api/v1.0/quiz/<int:id_quiz>', methods=['PUT'])
-def update_questionnaire(id_quiz):
+
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>', methods = ['PUT'])
+def update_questionnaire(quiz_id):
     if not request.json:
         abort(400)
-    name = request.json.get('name', None)
-    return Questionnaire.update_questionnaire(id_quiz, name)
-
-@app.route('/quiz/api/v1.0/quiz/<int:id_quiz>', methods=['DELETE'])
-def delete_questionnaire(id_quiz):
-    return Questionnaire.delete_questionnaire(id_quiz)
-
-
-
-
-@app.route('/quiz/api/v1.0/quiz/<int:id_quiz>/questions', methods=['GET'])
-def get_questions_for_questionnaire(id_quiz):
-    return Question.get_questions_for_questionnaire(id_quiz)
-
-@app.route('/quiz/api/v1.0/quiz/<int:id_quiz>/questions/<int:id_question>', methods=['GET'])
-def get_question(id_question,id_quiz):
-    return Question.get_question(id_question,id_quiz)
-
-@app.route('/quiz/api/v1.0/quiz/<int:id_quiz>/questions', methods=['POST'])
-def create_question(id_quiz):
-    if not request.json or 'title' not in request.json or 'question_type' not in request.json:
+    if 'name' not in request.json or ('name' in request.json and not isinstance(request.json['name'], str)):
         abort(400)
-
-    title = request.json['title']
-    question_type = request.json['question_type']
-
-    kwargs = {}
-    if question_type == 'simplequestion':
-        kwargs['reponse'] = request.json.get('reponse', None)
-    elif question_type == 'mutiplequestion':
-        kwargs['proposition1'] = request.json.get('proposition1', None)
-        kwargs['proposition2'] = request.json.get('proposition2', None)
-        kwargs['reponse'] = request.json.get('reponse', None)
-
-    return Question.create_question(title, question_type, id_quiz, **kwargs)
+    md.update_questionnaire_name(quiz_id, request.json['name'])
+    return jsonify(md.get_questionnaire(quiz_id).to_json())
 
 
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>', methods = ['DELETE'])
+def delete_questionnaire(quiz_id):
+    md.delete_questionnaire(quiz_id)
+    return jsonify({'deletion': True})
+    
+
+
+
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>/questions', methods = ['GET'])
+def get_questions(quiz_id):
+    res = []
+    for question in md.get_questions(quiz_id):
+        res.append(question.to_json())
+    return jsonify(res)
+
+
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>/questions/<int:question_id>', methods = ['GET'])
+def get_question(quiz_id, question_id):
+    return jsonify(md.get_question(quiz_id, question_id).to_json())
+
+
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>/questions', methods = ['POST'])
+def create_question(quiz_id):
+    if not request.json or 'type' not in request.json:
+        abort(400)
+    match request.json['type']:
+        case 'simple':
+            if 'title' not in request.json or 'answer' not in request.json:
+                abort(400)
+            question = md.create_simple_question(quiz_id, request.json['title'], request.json['answer']).to_json()
+        case 'multiple':
+            if 'title' not in request.json or 'proposition1' not in request.json or 'proposition2' not in request.json or 'answer' not in request.json:
+                abort(400)
+            question = md.create_multiple_question(quiz_id, request.json['title'], request.json['proposition1'], request.json['proposition2'], request.json['answer']).to_json()
+        case _:
+            abort(400)
+    return jsonify({'question created': question}), 201
+
+
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>/questions/<int:question_id>', methods = ['PUT'])
+def update_question(quiz_id, question_id):
+    if not request.json:
+        abort(400)
+    question = md.update_question(quiz_id, question_id, request.json).to_json()
+    return jsonify({'question updated': question})
+
+
+@app.route('/quiz/api/v1.0/quiz/<int:quiz_id>/questions/<int:question_id>', methods = ['DELETE'])
+def delete_question(quiz_id, question_id):
+    md.delete_question(quiz_id, question_id)
+    return jsonify({'deletion': True})
